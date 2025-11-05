@@ -135,6 +135,10 @@ body {
   width: 180px;
   height: auto;
   cursor: pointer;
+  -webkit-user-drag: none; /* prevent image drag on iOS/Chrome */
+  -webkit-touch-callout: none; /* prevent long-press menu on iOS */
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .spike-help {
