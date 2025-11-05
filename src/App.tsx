@@ -323,6 +323,7 @@ export default function ValorantSpikeSimulator() {
                   src={spikeImage}
                   alt="Spike"
                   className="spike-image"
+                  onContextMenu={(e) => e.preventDefault()}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     beginHold();
