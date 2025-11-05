@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "./AppStyles.css";
 import { motion } from "framer-motion";
 
@@ -29,6 +29,7 @@ export default function ValorantSpikeSimulator() {
   // 🔊 오디오 객체는 마운트 시 한 번만 생성하도록 lazy init
   const plantAudioRef = useRef<HTMLAudioElement | null>(null);
   const defuseAudioRef = useRef<HTMLAudioElement | null>(null);
+  const spikeRef = useRef<HTMLImageElement | null>(null);
 
   // 컴포넌트 마운트 시 오디오 생성(한 번만 실행)
   useEffect(() => {
@@ -132,7 +133,7 @@ export default function ValorantSpikeSimulator() {
   }
 
   // 🧠 해체 시작
-  const beginHold = () => {
+  const beginHold = useCallback(() => {
     if (!planted || isDefused || status === "폭발") return;
     if (isHolding) return;
 
@@ -157,8 +158,6 @@ export default function ValorantSpikeSimulator() {
     timerRef.current = setInterval(() => {
       if (startTimeRef.current) {
         const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        // savedProgress는 endHold 시점에만 확정적으로 저장되므로,
-        // 현재 누르고 있는 진행도와 저장된 진행도를 합산하여 총 진행도를 계산합니다.
         const total = savedProgress + elapsed;
 
         // 시각적 진행
@@ -198,10 +197,10 @@ export default function ValorantSpikeSimulator() {
         }
       }
     }, 10); // 0.01초 단위 감지 위해 10ms
-  };
+  }, [planted, isDefused, status, isHolding, savedProgress]);
 
   // 🧠 해체 종료
-  const endHold = () => {
+  const endHold = useCallback(() => {
     if (!isHolding) return;
     setIsHolding(false);
 
@@ -232,10 +231,38 @@ export default function ValorantSpikeSimulator() {
         setSavedProgress(0);
       }
     }
-  };
+  }, [isHolding, savedProgress]);
 
   const visualSeconds = Math.min(TOTAL_DEFUSE, savedProgress + holdProgress);
   const visualPercent = Math.min(100, (visualSeconds / TOTAL_DEFUSE) * 100);
+
+  // 네이티브 터치 리스너 등록 (passive:false) - preventDefault 허용
+  useEffect(() => {
+    const el = spikeRef.current;
+    if (!el) return;
+
+    const onTouchStartNative = (ev: TouchEvent) => {
+      ev.preventDefault();
+      beginHold();
+    };
+
+    const onTouchEndNative = (ev: TouchEvent) => {
+      ev.preventDefault();
+      // 상태를 설치됨으로 바꾸려면 setStatus("설치됨") 호출
+      setStatus("설치됨");
+      endHold();
+    };
+
+    el.addEventListener("touchstart", onTouchStartNative, { passive: false });
+    el.addEventListener("touchend", onTouchEndNative);
+    el.addEventListener("touchcancel", onTouchEndNative);
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStartNative as EventListener);
+      el.removeEventListener("touchend", onTouchEndNative as EventListener);
+      el.removeEventListener("touchcancel", onTouchEndNative as EventListener);
+    };
+  }, [beginHold, endHold]);
 
   useEffect(() => {
     return () => {
@@ -320,6 +347,7 @@ export default function ValorantSpikeSimulator() {
             {planted ? (
               <div className="centered">
                 <img
+                  ref={spikeRef}
                   src={spikeImage}
                   alt="Spike"
                   className="spike-image"
@@ -334,14 +362,6 @@ export default function ValorantSpikeSimulator() {
                     endHold();
                   }}
                   onMouseLeave={(e) => {
-                    e.preventDefault();
-                    endHold();
-                  }}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    beginHold();
-                  }}
-                  onTouchEnd={(e) => {
                     e.preventDefault();
                     endHold();
                   }}
