@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import "./AppStyles.css";
 import { motion } from "framer-motion";
+import KakaoAdFit from "./components/KakaoAdFit";
+import KakaoAdFit2 from "./components/KakaoAdFit2";
 
 export default function ValorantSpikeSimulator() {
   const TOTAL_DEFUSE = 7;
@@ -278,142 +280,147 @@ export default function ValorantSpikeSimulator() {
   }, []);
 
   return (
-    <div className="app-root">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="app-card"
-      >
-        <h1 className="title">발로란트 스파이크 해체 시뮬레이터</h1>
+    <>
+      <div className="app-root">
+        <KakaoAdFit2 />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="app-card"
+        >
+          <h1 className="title">발로란트 스파이크 해체 시뮬레이터</h1>
 
-        <div className="controls">
-          <button
-            onClick={handleStart}
-            className="btn btn--primary"
-            disabled={planted}
-            style={{ background: planted ? "#9aa7ff" : "#2563eb" }}
-          >
-            Start (설치)
-          </button>
-          <button
-            onClick={handleReset}
-            className="btn btn--muted"
-            style={{ background: "#6b7280" }}
-          >
-            Reset
-          </button>
+          <div className="controls">
+            <button
+              onClick={handleStart}
+              className="btn btn--primary"
+              disabled={planted}
+              style={{ background: planted ? "#9aa7ff" : "#2563eb" }}
+            >
+              Start (설치)
+            </button>
+            <button
+              onClick={handleReset}
+              className="btn btn--muted"
+              style={{ background: "#6b7280" }}
+            >
+              Reset
+            </button>
 
-          {/* 볼륨 조절 */}
-          <input
-            className="range"
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-          />
+            {/* 볼륨 조절 */}
+            <input
+              className="range"
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+            />
 
-          <div className="status">
-            상태:{" "}
-            <strong className="status-value">{status.toUpperCase()}</strong>
-          </div>
-        </div>
-
-        {planted && showBanner && (
-          <div className="banner">
-            💣 폭발까지 남은 시간: {timeLeft.toFixed(2)}s
-          </div>
-        )}
-
-        {planted && (
-          <button
-            onClick={() => setShowBanner((prev) => !prev)}
-            className="btn btn--secondary"
-          >
-            {showBanner ? "폭발시간 가리기" : "폭발시간 보이기"}
-          </button>
-        )}
-
-        {status === "해체완료" && (
-          <div className="success">
-            ✅ 스파이크 해체 완료! 폭발까지 남은 시간: {timeLeft.toFixed(2)}s
-          </div>
-        )}
-
-        <div className="layout">
-          <div className="panel">
-            {planted ? (
-              <div className="centered">
-                <div
-                  ref={spikeRef}
-                  role="img"
-                  aria-label="Spike"
-                  className="spike-image"
-                  style={{ backgroundImage: `url(${spikeImage})` }}
-                  onContextMenu={(e) => e.preventDefault()}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    beginHold();
-                  }}
-                  onMouseUp={(e) => {
-                    e.preventDefault();
-                    setStatus("설치됨");
-                    endHold();
-                  }}
-                  onMouseLeave={(e) => {
-                    e.preventDefault();
-                    endHold();
-                  }}
-                />
-                <div className="spike-help">
-                  스파이크를 꾹 누르고 있으면 해체됩니다
-                </div>
-              </div>
-            ) : status === "해체중" ? (
-              <div className="state-info success">✅ 스파이크 해체 완료!</div>
-            ) : status === "폭발" ? (
-              <div className="state-info danger">💥 스파이크 폭발!</div>
-            ) : (
-              <div className="state-info muted">
-                Start를 눌러 스파이크를 설치하세요
-              </div>
-            )}
+            <div className="status">
+              상태:{" "}
+              <strong className="status-value">{status.toUpperCase()}</strong>
+            </div>
           </div>
 
-          <div className="side">
-            <div className="subhead">해체 진행</div>
+          {planted && showBanner && (
+            <div className="banner">
+              💣 폭발까지 남은 시간: {timeLeft.toFixed(2)}s
+            </div>
+          )}
 
-            <div className="progress-wrapper">
-              {/* 진행 바 */}
-              <motion.div
-                className="progress-bar"
-                style={{ height: "100%" }}
-                animate={{ width: `${visualPercent}%` }}
-                transition={{ duration: 0.04 }}
-              />
+          {planted && (
+            <button
+              onClick={() => setShowBanner((prev) => !prev)}
+              className="btn btn--secondary"
+            >
+              {showBanner ? "폭발시간 가리기" : "폭발시간 보이기"}
+            </button>
+          )}
 
-              {/* 체크포인트 경계선 */}
-              {[CHECKPOINT].map((checkpoint) => {
-                const leftPercent = (checkpoint / TOTAL_DEFUSE) * 100;
-                return (
+          {status === "해체완료" && (
+            <div className="success">
+              ✅ 스파이크 해체 완료! 폭발까지 남은 시간: {timeLeft.toFixed(2)}s
+            </div>
+          )}
+
+          <div className="layout">
+            <div className="panel">
+              {planted ? (
+                <div className="centered">
                   <div
-                    key={checkpoint}
-                    className="checkpoint-line"
-                    style={{ left: `${leftPercent}%` }}
+                    ref={spikeRef}
+                    role="img"
+                    aria-label="Spike"
+                    className="spike-image"
+                    style={{ backgroundImage: `url(${spikeImage})` }}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      beginHold();
+                    }}
+                    onMouseUp={(e) => {
+                      e.preventDefault();
+                      setStatus("설치됨");
+                      endHold();
+                    }}
+                    onMouseLeave={(e) => {
+                      e.preventDefault();
+                      endHold();
+                    }}
                   />
-                );
-              })}
+                  <div className="spike-help">
+                    스파이크를 꾹 누르고 있으면 해체됩니다
+                  </div>
+                </div>
+              ) : status === "해체중" ? (
+                <div className="state-info success">✅ 스파이크 해체 완료!</div>
+              ) : status === "폭발" ? (
+                <div className="state-info danger">💥 스파이크 폭발!</div>
+              ) : (
+                <div className="state-info muted">
+                  Start를 눌러 스파이크를 설치하세요
+                </div>
+              )}
             </div>
 
-            <div className="progress-info">
-              <span>{visualSeconds.toFixed(2)}s</span>
-              <span>{TOTAL_DEFUSE}s</span>
+            <div className="side">
+              <div className="subhead">해체 진행</div>
+
+              <div className="progress-wrapper">
+                {/* 진행 바 */}
+                <motion.div
+                  className="progress-bar"
+                  style={{ height: "100%" }}
+                  animate={{ width: `${visualPercent}%` }}
+                  transition={{ duration: 0.04 }}
+                />
+
+                {/* 체크포인트 경계선 */}
+                {[CHECKPOINT].map((checkpoint) => {
+                  const leftPercent = (checkpoint / TOTAL_DEFUSE) * 100;
+                  return (
+                    <div
+                      key={checkpoint}
+                      className="checkpoint-line"
+                      style={{ left: `${leftPercent}%` }}
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="progress-info">
+                <span>{visualSeconds.toFixed(2)}s</span>
+                <span>{TOTAL_DEFUSE}s</span>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.div>
-    </div>
+          <KakaoAdFit />
+        </motion.div>
+        <KakaoAdFit2 />
+      </div>
+    </>
   );
 }

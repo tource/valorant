@@ -114,6 +114,7 @@ body {
   gap: 18px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-bottom: 16px;
 }
 
 .panel {
