@@ -3,6 +3,7 @@ import "./AppStyles.css";
 import { motion } from "framer-motion";
 import KakaoAdFit from "./components/KakaoAdFit";
 import KakaoAdFit2 from "./components/KakaoAdFit2";
+import KakaoAdFit3 from "./components/KakaoAdFit3";
 
 export default function ValorantSpikeSimulator() {
   const TOTAL_DEFUSE = 7;
@@ -419,7 +420,7 @@ export default function ValorantSpikeSimulator() {
           </div>
           <KakaoAdFit />
         </motion.div>
-        <KakaoAdFit2 />
+        <KakaoAdFit3 />
       </div>
     </>
   );
