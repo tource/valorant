@@ -29,7 +29,7 @@ export default function ValorantSpikeSimulator() {
   // 🔊 오디오 객체는 마운트 시 한 번만 생성하도록 lazy init
   const plantAudioRef = useRef<HTMLAudioElement | null>(null);
   const defuseAudioRef = useRef<HTMLAudioElement | null>(null);
-  const spikeRef = useRef<HTMLImageElement | null>(null);
+  const spikeRef = useRef<HTMLDivElement | null>(null);
 
   // 컴포넌트 마운트 시 오디오 생성(한 번만 실행)
   useEffect(() => {
@@ -346,13 +346,12 @@ export default function ValorantSpikeSimulator() {
           <div className="panel">
             {planted ? (
               <div className="centered">
-                <img
+                <div
                   ref={spikeRef}
-                  src={spikeImage}
-                  alt="Spike"
+                  role="img"
+                  aria-label="Spike"
                   className="spike-image"
-                  draggable={false}
-                  onDragStart={(e) => e.preventDefault()}
+                  style={{ backgroundImage: `url(${spikeImage})` }}
                   onContextMenu={(e) => e.preventDefault()}
                   onMouseDown={(e) => {
                     e.preventDefault();
