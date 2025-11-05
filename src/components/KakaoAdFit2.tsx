@@ -8,22 +8,23 @@ function KakaoAdFit() {
     if (adRef.current) return;
     if (!asideRef.current) return;
 
+    const windowSize = window.innerWidth;
+
+    // 1024px 미만이면 광고 생성 X
+    if (windowSize < 1024) {
+      asideRef.current.style.display = "none"; // 아예 숨김 처리
+      return;
+    }
+
     const ins = document.createElement("ins");
     const script = document.createElement("script");
 
     ins.className = "kakao_ad_area";
-    ins.style.display = "block"; // 필수
+    ins.style.display = "block";
 
-    const windowSize = window.innerWidth; // 오타 수정
-    if (windowSize < 1024) {
-      ins.setAttribute("data-ad-width", "320");
-      ins.setAttribute("data-ad-height", "100");
-      ins.setAttribute("data-ad-unit", "");
-    } else {
-      ins.setAttribute("data-ad-width", "728");
-      ins.setAttribute("data-ad-height", "90");
-      ins.setAttribute("data-ad-unit", "DAN-PeBO8UnSwYiS9Gqv");
-    }
+    ins.setAttribute("data-ad-width", "728");
+    ins.setAttribute("data-ad-height", "90");
+    ins.setAttribute("data-ad-unit", "DAN-PeBO8UnSwYiS9Gqv");
 
     script.async = true;
     script.type = "text/javascript";
