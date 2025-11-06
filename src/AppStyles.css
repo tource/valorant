@@ -104,6 +104,29 @@ body {
   font-size: 14px;
 }
 
+.timer-controls {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn--danger {
+  background: #dc2626;
+}
+
+.btn--danger:hover {
+  background: #ef4444;
+}
+
+.btn--success {
+  background: #059669;
+}
+
+.btn--success:hover {
+  background: #10b981;
+}
+
 .success {
   color: #10b981;
   font-size: 18px;

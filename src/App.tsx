@@ -32,11 +32,13 @@ export default function ValorantSpikeSimulator() {
   // 🔊 오디오 객체는 마운트 시 한 번만 생성하도록 lazy init
   const plantAudioRef = useRef<HTMLAudioElement | null>(null);
   const defuseAudioRef = useRef<HTMLAudioElement | null>(null);
+  const boomAudioRef = useRef<HTMLAudioElement | null>(null);
+
   const spikeRef = useRef<HTMLDivElement | null>(null);
 
   // 컴포넌트 마운트 시 오디오 생성(한 번만 실행)
   useEffect(() => {
-    plantAudioRef.current = new Audio("/sounds/plant.mp3");
+    plantAudioRef.current = new Audio("/sounds/설치.mp3");
 
     if (plantAudioRef.current) plantAudioRef.current.volume = volume;
     if (defuseAudioRef.current) defuseAudioRef.current.volume = volume;
@@ -56,6 +58,22 @@ export default function ValorantSpikeSimulator() {
   }, []);
 
   useEffect(() => {
+    if (status === "폭발") {
+      boomAudioRef.current = new Audio("/sounds/터짐.mp3");
+      if (boomAudioRef.current) {
+        boomAudioRef.current.volume = volume;
+        boomAudioRef.current.play().catch(() => {});
+      }
+    }
+    return () => {
+      if (boomAudioRef.current) {
+        boomAudioRef.current.pause();
+        boomAudioRef.current.currentTime = 0;
+      }
+    };
+  }, [status, volume]);
+
+  useEffect(() => {
     if (savedProgress === 3.5) {
       defuseAudioRef.current = new Audio("/sounds/halfdefuse.mp3");
     } else {
@@ -66,6 +84,7 @@ export default function ValorantSpikeSimulator() {
   useEffect(() => {
     if (plantAudioRef.current) plantAudioRef.current.volume = volume;
     if (defuseAudioRef.current) defuseAudioRef.current.volume = volume;
+    if (boomAudioRef.current) boomAudioRef.current.volume = volume;
   }, [volume]);
 
   // 📦 설치 (시작)
@@ -123,6 +142,10 @@ export default function ValorantSpikeSimulator() {
     if (defuseAudio) {
       defuseAudio.pause();
       defuseAudio.currentTime = 0;
+    }
+    if (boomAudioRef.current) {
+      boomAudioRef.current.pause();
+      boomAudioRef.current.currentTime = 0;
     }
 
     if (timerRef.current) {
@@ -329,6 +352,42 @@ export default function ValorantSpikeSimulator() {
           {planted && showBanner && (
             <div className="banner">
               💣 폭발까지 남은 시간: {timeLeft.toFixed(2)}s
+              <div className="timer-controls">
+                <button
+                  onClick={() => {
+                    setTimeLeft((prev) => {
+                      const newTime = Math.max(prev - 20, 0);
+                      const plantAudio = plantAudioRef.current;
+                      if (plantAudio) {
+                        // BOMB_TIMER 전체 시간 대비 오디오 위치 비율 계산
+                        const progress = (BOMB_TIMER - newTime) / BOMB_TIMER;
+                        plantAudio.currentTime = plantAudio.duration * progress;
+                      }
+                      return newTime;
+                    });
+                  }}
+                  className="btn btn--danger"
+                >
+                  -20초
+                </button>
+                <button
+                  onClick={() => {
+                    setTimeLeft((prev) => {
+                      const newTime = Math.max(prev - 5, 0);
+                      const plantAudio = plantAudioRef.current;
+                      if (plantAudio) {
+                        // BOMB_TIMER 전체 시간 대비 오디오 위치 비율 계산
+                        const progress = (BOMB_TIMER - newTime) / BOMB_TIMER;
+                        plantAudio.currentTime = plantAudio.duration * progress;
+                      }
+                      return newTime;
+                    });
+                  }}
+                  className="btn btn--danger"
+                >
+                  -5초
+                </button>
+              </div>
             </div>
           )}
 
