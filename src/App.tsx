@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import "./AppStyles.css";
 import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import "./AppStyles.css";
 import KakaoAdFit from "./components/KakaoAdFit";
 import KakaoAdFit2 from "./components/KakaoAdFit2";
 import KakaoAdFit3 from "./components/KakaoAdFit3";
@@ -22,10 +22,12 @@ export default function ValorantSpikeSimulator() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [volume, setVolume] = useState(0.1); // 🔊 볼륨 상태 (0~1)
   const [showBanner, setShowBanner] = useState(true);
+  const [failTime, setFailTime] = useState<number | null>(null);
 
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const bombTimerRef = useRef<number | null>(null);
+  const timeLeftRef = useRef(timeLeft);
 
   const spikeImage = "/images/spike.gif";
 
@@ -114,6 +116,15 @@ export default function ValorantSpikeSimulator() {
             clearInterval(bombTimerRef.current);
             bombTimerRef.current = null;
           }
+          // 해체 중이었다면 부족한 시간 계산
+          if (isHolding) {
+            const remainingDefuseTime =
+              TOTAL_DEFUSE - (savedProgress + holdProgress);
+            const message = `스파이크 폭발! 해체까지 ${remainingDefuseTime.toFixed(
+              1
+            )}초 부족했습니다`;
+            alert(message);
+          }
           setStatus("폭발");
           setPlanted(false);
         }
@@ -159,6 +170,7 @@ export default function ValorantSpikeSimulator() {
   }
 
   // 🧠 해체 시작
+
   const beginHold = useCallback(() => {
     if (!planted || isDefused || status === "폭발") return;
     if (isHolding) return;
@@ -167,63 +179,74 @@ export default function ValorantSpikeSimulator() {
     setStatus("해체중");
     startTimeRef.current = Date.now();
 
-    // B. 🔊 해체 사운드 재생
     const defuseAudio = defuseAudioRef.current;
     if (defuseAudio) {
       defuseAudio.volume = 1;
       defuseAudio.play().catch(() => {});
     }
 
-    // C. 🗑️ 기존 타이머 정리 (안전 장치)
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
 
-    // D. ⏱️ 새로운 타이머 시작
     timerRef.current = setInterval(() => {
-      if (startTimeRef.current) {
-        const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        const total = savedProgress + elapsed;
+      if (!startTimeRef.current) return;
 
-        // 시각적 진행
-        setHoldProgress(elapsed);
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const total = savedProgress + elapsed;
 
-        // TOTAL_DEFUSE 이상이면 바로 해체 완료 처리
-        if (total >= TOTAL_DEFUSE) {
-          setSavedProgress(TOTAL_DEFUSE);
-          setIsDefused(true);
-          setStatus("해체완료");
-          setPlanted(false);
+      // 실시간 진행률 반영
+      setHoldProgress(elapsed);
 
-          // 스파이크 사운드 중지
-          const plantAudio = plantAudioRef.current;
-          if (plantAudio) {
-            plantAudio.pause();
-            plantAudio.currentTime = 0;
-          }
+      // 🚨 폭발 여부를 ref로 실시간 감지
+      if (timeLeftRef.current <= 0) {
+        const totalProgress =
+          savedProgress + (Date.now() - startTimeRef.current) / 1000;
+        const remaining = Math.max(TOTAL_DEFUSE - totalProgress, 0);
+        setFailTime(remaining);
 
-          // 폭탄 타이머 중지
-          if (bombTimerRef.current) {
-            clearInterval(bombTimerRef.current);
-            bombTimerRef.current = null;
-          }
-
-          // 해체 사운드 중지 (endHold가 호출되지 않아도 여기서 중지)
-          if (defuseAudio) defuseAudio.pause();
-
-          // 상태 초기화 및 타이머 정리
-          setHoldProgress(0);
-          startTimeRef.current = null;
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          setIsHolding(false); // 해체 완료 후 isHolding 상태 해제
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
         }
+        if (defuseAudio) defuseAudio.pause();
+        setIsHolding(false);
+        setStatus("폭발");
+        return;
       }
-    }, 10); // 0.01초 단위 감지 위해 10ms
+
+      // ✅ 정상 해체 완료
+      if (total >= TOTAL_DEFUSE) {
+        setSavedProgress(TOTAL_DEFUSE);
+        setIsDefused(true);
+        setStatus("해체완료");
+        setPlanted(false);
+
+        if (plantAudioRef.current) {
+          plantAudioRef.current.pause();
+          plantAudioRef.current.currentTime = 0;
+        }
+
+        if (bombTimerRef.current) {
+          clearInterval(bombTimerRef.current);
+          bombTimerRef.current = null;
+        }
+
+        if (defuseAudio) defuseAudio.pause();
+
+        setHoldProgress(0);
+        startTimeRef.current = null;
+        clearInterval(timerRef.current!);
+        timerRef.current = null;
+        setIsHolding(false);
+      }
+    }, 10);
   }, [planted, isDefused, status, isHolding, savedProgress]);
+
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   // 🧠 해체 종료
   const endHold = useCallback(() => {
@@ -438,7 +461,14 @@ export default function ValorantSpikeSimulator() {
               ) : status === "해체중" ? (
                 <div className="state-info success">✅ 스파이크 해체 완료!</div>
               ) : status === "폭발" ? (
-                <div className="state-info danger">💥 스파이크 폭발!</div>
+                <div className="state-info danger">
+                  💥 스파이크 폭발!
+                  {failTime !== null && (
+                    <div className="fail-info">
+                      ⏱️ 해체까지 {failTime.toFixed(2)}초 부족했습니다.
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="state-info muted">
                   Start를 눌러 스파이크를 설치하세요
